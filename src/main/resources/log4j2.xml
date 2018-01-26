@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--monitorInterval="1800"，指log4j2每隔1800秒（半小时），自动监控该配置文件是否有变化，如果变化，则自动根据文件内容重新配置-->
+<Configuration status="warn" monitorInterval="1800" strict="true" schema="Log4J-V2.6.2.xsd">
+    <properties>                                                                          <!--定义属性，类似与java中的成员变量-->
+        <property name="LOG_HOME">D:/app/JF_IS/JF_IS_ERM1000_APP</property>               <!--定义：日志文件保存的地址-->
+        <property name="FILE_NAME_DEBUG">JF_IS_ERM1000_APP-debug</property>               <!--日志文件的文件名称-->
+        <property name="FILE_NAME_INFO">JF_IS_ERM1000_APP-info</property>                 <!--日志文件的文件名称2-->
+        <property name="FILE_NAME_WARN">JF_IS_ERM1000_APP-warn</property>                 <!--日志文件的文件名称3-->
+        <property name="FILE_NAME_ERROR">JF_IS_ERM1000_APP-error</property>               <!--日志文件的文件名称4-->
+        <property name="LOG_LEVEL">debug</property>                                       <!--日志输出级别-->
+    </properties>
+    <Appenders>                                                                                                <!--输出源：定义日志输出的方式（控制台/文件并保存到本地）-->
+        <Console name="Console" target="SYSTEM_OUT" follow="true">                                             <!--定义在控制台输出日志的相关信息-->
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>                                <!--控制台只输出level及以上级别的信息(onMatch)，其他的直接拒绝(onMismatch) -->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %class{36} %L %M - %msg%xEx%n"/>      <!--输出日志的格式-->
+        </Console>
+        <!--DEBUG-->
+        <!--RollingRandomAccessFile即表示以文件方式记录，注意一下filePattern的设置，它与SizeBasedTriggeringPolicy（表示单个文件最大多少容量）结合在一起，非常有用，
+            以这段配置为例，当单个文件达到10M后，会自动将以前的内容，先创建类似 2014-09（年-月）的目录，然后按"xxx-年-月-日-序号"命名，打成压缩包-->
+        <RollingRandomAccessFile name="service_debug_appender"
+                                 fileName="${LOG_HOME}/${FILE_NAME_DEBUG}.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME_DEBUG}-%d{yyyy-MM-dd}-%i.debug.gz">
+
+            <!--%d{HH:mm:ss.SSS} 表示输出到毫秒的时间
+                %t 输出当前线程名称
+                %-5level 输出日志级别，-5表示左对齐并且固定输出5个字符，如果不足在右边补0
+                %logger 输出logger名称，因为Root Logger没有名称，所以没有输出
+                %msg 日志文本
+                %n 换行
+                其他常用的占位符有：
+                %F 输出所在的类文件名，如Client.java
+                %L 输出行号
+                %M 输出所在方法名
+                %l 输出语句所在的行数, 包括类名、方法名、文件名、行数
+                RollingRandomAccessFile的属性：
+                fileName     指定当前日志文件的位置和文件名称
+                filePattern  指定当发生Rolling时，文件的转移和重命名规则
+                SizeBasedTriggeringPolicy  指定当文件体积大于size指定的值时，触发Rolling
+                DefaultRolloverStrategy    指定最多保存的文件个数
+                TimeBasedTriggeringPolicy  这个配置需要和filePattern结合使用，注意filePattern中配置的文件重命名规则是${FILE_NAME}-%d{yyyy-MM-dd HH-mm}-%i，
+                                           最小的时间粒度是mm，即分钟，TimeBasedTriggeringPolicy指定的size是1，结合起来就是每1分钟生成一个新文件。
+                                           如果改成%d{yyyy-MM-dd HH}，最小粒度为小时，则每一个小时生成一个文件。
+            -->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %class{36} %L %M -- %msg%xEx%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="1000"/>                                               <!--DefaultRolloverStrategy max="100"表示压缩包，最多保留100个-->
+            <Filters>
+                <ThresholdFilter level="info" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="NEUTRAL"/>
+            </Filters>
+        </RollingRandomAccessFile>
+        <!--INFO-->
+        <RollingRandomAccessFile name="service_info_appender" fileName="${LOG_HOME}/${FILE_NAME_INFO}.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME_INFO}-%d{yyyy-MM-dd}-%i.info.gz">
+            <!--%d{yyyy-MM-dd HH:mm:ss, SSS} : 日志生产时间 - %p : 日志输出格式 - %c : logger的名称 - %m : 日志内容，即logger.info("message")
+            - %n : 换行符 - %C : Java类名 - %L : 日志输出所在行数 - %M : 日志输出所在方法名 - hostName : 本地机器名 - hostAddress : 本地ip地址-->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %class{36} %L %M -- %msg%xEx%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!--DefaultRolloverStrategy max="20"表示压缩包，最多保留20个-->
+            <DefaultRolloverStrategy max="1000"/>
+            <Filters>
+                <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingRandomAccessFile>
+        <!--WARN-->
+        <RollingRandomAccessFile name="service_warn_appender" fileName="${LOG_HOME}/${FILE_NAME_WARN}.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME_WARN}-%d{yyyy-MM-dd}-%i.warn.gz">
+            <!--%d{yyyy-MM-dd HH:mm:ss, SSS} : 日志生产时间 - %p : 日志输出格式 - %c : logger的名称 - %m : 日志内容，即logger.info("message")
+            - %n : 换行符 - %C : Java类名 - %L : 日志输出所在行数 - %M : 日志输出所在方法名 - hostName : 本地机器名 - hostAddress : 本地ip地址-->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %class{36} %L %M -- %msg%xEx%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!--DefaultRolloverStrategy max="20"表示压缩包，最多保留20个-->
+            <DefaultRolloverStrategy max="1000"/>
+            <Filters>
+                <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="warn" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingRandomAccessFile>
+        <!--ERROR-->
+        <RollingRandomAccessFile name="service_error_appender" fileName="${LOG_HOME}/${FILE_NAME_ERROR}.log"
+                                 filePattern="${LOG_HOME}/$${date:yyyy-MM}/${FILE_NAME_ERROR}-%d{yyyy-MM-dd}-%i.error.gz">
+            <!--%d{yyyy-MM-dd HH:mm:ss, SSS} : 日志生产时间 - %p : 日志输出格式 - %c : logger的名称 - %m : 日志内容，即logger.info("message")
+            - %n : 换行符 - %C : Java类名 - %L : 日志输出所在行数 - %M : 日志输出所在方法名 - hostName : 本地机器名 - hostAddress : 本地ip地址-->
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %class{36} %L %M -- %msg%xEx%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <!--DefaultRolloverStrategy max="20"表示压缩包，最多保留20个-->
+            <DefaultRolloverStrategy max="1000"/>
+            <Filters>
+                <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+        </RollingRandomAccessFile>
+    </Appenders>
+    <Loggers>                                                                                   <!-- 只有定义了logger并引入的appender，appender才会生效 -->
+        <!--配置日志的根节点-->
+        <Root level="${LOG_LEVEL}" includeLocation="true">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="service_debug_appender"/>
+            <appender-ref ref="service_info_appender"/>
+            <appender-ref ref="service_warn_appender"/>
+            <appender-ref ref="service_error_appender"/>
+        </Root>
+    </Loggers>
+</Configuration>
